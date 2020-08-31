@@ -9,11 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Assignment 1 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars}
 library(ggplot2)
@@ -21,8 +18,6 @@ library(tidyverse)
 library(tidycensus)
 library(viridis)
 ```
-
-
 
 
 ```{r}
@@ -50,7 +45,7 @@ vars <- c("B06009_004",
 ```
 
 
-
+# Loading 2014-2018 5 year ACS data for Fulton County, GA
 
 ```{r}
 AT_tracts <- get_acs(geography = "tract", variables = vars,
@@ -97,6 +92,9 @@ AT_tracts <- get_acs(geography = "tract", variables = vars,
 ```
 
 
+# Plot 1
+Plotting a majority of my variables
+
 ```{r}
 ggplot(AT_tracts, 
        aes(x = pct_rent_occ,
@@ -125,6 +123,8 @@ ggplot(AT_tracts,
   theme(legend.key.size = unit(0.1, "cm"))
 ```
 
+# Plot 2
+Median age and percent renter occupied units 
 
 ```{r}
 ggplot(AT_tracts, 
@@ -148,7 +148,8 @@ ggplot(AT_tracts,
 ```
 
 
-
+# Plot 3
+Percent of rent occupied units, and majority race/ethnicity
 
 ```{r}
  ggplot(AT_tracts, aes(x = factor(majority_race_eth), y = pct_bach, fill = factor(majority_race_eth))) +
@@ -171,10 +172,9 @@ ggplot(AT_tracts,
   
   
 ```
-```{r}
-AT_tracts
-```
 
+# Plot 4
+Heat map of income and race
 
 ```{r}
 ggplot(AT_tracts, aes(x = majority_race_eth, y = majority_inc, fill = pct_rent_occ)) +
@@ -196,7 +196,8 @@ ggplot(AT_tracts, aes(x = majority_race_eth, y = majority_inc, fill = pct_rent_o
 
 ```
 
-
+# Plot 5
+Scatter plot of percent with bachelor's degree and percent of individuals that only speak English
 
 ```{r}
 ggplot(AT_tracts, aes(x=pct_eng, y=pct_bach, size = tot_pop, fill = majority_race_eth)) +
@@ -212,6 +213,8 @@ ggplot(AT_tracts, aes(x=pct_eng, y=pct_bach, size = tot_pop, fill = majority_rac
     theme_light() 
 ```
 
+# Plot 6
+Violin plot of percent only english, and majority race/ethnicity
 
 ```{r}
 ggplot(AT_tracts, aes(x = majority_race_eth, y = pct_eng, fill = majority_race_eth)) +
@@ -221,6 +224,9 @@ ggplot(AT_tracts, aes(x = majority_race_eth, y = pct_eng, fill = majority_race_e
     theme_minimal()
  
 ```
+
+# Plot 7
+Box plot of percent with a bachelor's degree, and majority income
 
 ```{r}
  ggplot(AT_tracts, aes(x=majority_inc, y=pct_eng, fill = majority_inc)) +
@@ -238,6 +244,8 @@ ggplot(AT_tracts, aes(x = majority_race_eth, y = pct_eng, fill = majority_race_e
     
 ```
 
+# Plot 8
+Area chart of percent of indviduals that only speak English
 
 ```{r}
 ggplot(AT_tracts, aes(x=pct_eng)) +
@@ -248,6 +256,8 @@ ggplot(AT_tracts, aes(x=pct_eng)) +
   theme_minimal()
 ```
 
+# Plot 9
+Majority race/ethnicity and percent of individuals that only speak English
 
 ```{r}
 ggplot(AT_tracts, aes(x=majority_race_eth, y=pct_eng)) +
@@ -265,7 +275,8 @@ ggplot(AT_tracts, aes(x=majority_race_eth, y=pct_eng)) +
   coord_flip()
 ```
 
-
+# Plot 10
+Stacked bar chart of majority income and percent of individuals that only speak English
 ```{r}
 ggplot(AT_tracts, aes(x=majority_inc, y=pct_eng, fill = majority_race_eth)) +
   geom_bar(stat = "identity", width = 0.5) + 
