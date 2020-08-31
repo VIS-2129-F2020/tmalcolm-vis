@@ -1,0 +1,148 @@
+---
+title: "Week 3"
+author: "Taelor Malcolm"
+date: "8/15/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(tidyverse)
+library(ggspatial)
+library(cartogram)
+library(ggthemes)
+library(rnaturalearthhires)
+library(rgeos)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+```{r}
+devtools::install_github("ropensci/rnaturalearthhires")
+
+```
+
+
+```{r}
+india_states <- ne_states(country = "India", returnclass = "sf")
+
+india_map <- ggplot(india_states) +
+  geom_sf() +
+  theme_bw()
+
+india_map
+```
+```{r China}
+india_cea <- "+proj=cea"
+india_chamb <- "+proj=chamb +lat_1=10 +lon_1=30 +lon_2=40"
+india_vandg <- "+proj=vandg3"
+```
+
+
+
+```{r Equal Area Cylindrical}
+ggplot(india_states) +
+  geom_sf() +
+  coord_sf(crs = india_cea) +
+  theme_bw()
+```
+
+
+```{r Chamberlin Trimetric}
+ggplot(india_states) +
+  geom_sf() +
+  coord_sf(crs = india_chamb) +
+  theme_bw()
+```
+
+```{r vander der Grinten III}
+ggplot(india_states) +
+  geom_sf() +
+  coord_sf(crs = india_vandg) +
+  theme_bw()
+```
+
+```{r}
+india_transformed <- india_states %>%
+  st_transform(crs = india_cea)
+```
+
+
+
+
+```{r}
+birth_india <- read_csv("~/TA/2-CBR.csv") %>% 
+               rename(t16 = "2016")  %>% 
+               select(State, t16)
+
+birth_states <- india_transformed %>%
+  left_join(birth_india, by = c("name" = "State")) %>%
+  select(name, t16)
+```
+```{r}
+num_birth <- read_csv("~/TA/statistic_id1023387_number-of-live-births-india-2015-2017-by-state.csv")
+
+new_birth_states <- birth_states %>%
+  left_join(num_birth, by = "name") %>%
+  mutate(pop = births / (t16 / 1000)) %>%
+  select(name, t16, pop)
+```
+
+
+```{r}
+ggplot(birth_states, aes(fill = t16)) +
+  geom_sf(color = NA) +
+  scale_fill_viridis_c(
+    name = "2016 Birth Rate",
+    breaks = seq(12, 28, by = 4),
+    labels = formatC(seq(12, 28, by = 4), 
+                     big.mark = ",", format = "f", digits = 0), 
+              option = ) +
+  theme_map() +
+  theme(legend.background = element_blank())
+```
+
+```{r}
+birth_centeroids <- birth_states %>%
+  st_centroid()
+
+ggplot(india_transformed) +
+  geom_sf(fill = NA, color = "gray") +
+  geom_sf(data = birth_centeroids, 
+          aes(size = t16),
+          alpha = 0.5, color = "skyblue") +
+  scale_size_continuous(name = "2016 Birth Rate",
+    breaks = seq(12, 28, by = 4),
+    labels = formatC(seq(12, 28, by = 4), 
+                     big.mark = ",", format = "f", digits = 0),
+    range = c(0, 20)) +
+  theme_void() 
+```
+
+```{r}
+view(new_birth_states)
+```
+
+```{r}
+birth_cartogram_ncont <- new_birth_states %>%
+  cartogram_ncont("pop")
+
+ggplot(birth_cartogram_ncont, aes(fill = t16)) +
+  geom_sf(color = NA) +
+  theme_map() +
+  theme(legend.background = element_blank())
+```
+

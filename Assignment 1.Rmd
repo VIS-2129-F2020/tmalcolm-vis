@@ -1,0 +1,285 @@
+---
+title: "Week 2"
+author: "Taelor Malcolm"
+date: "8/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+library(ggplot2)
+library(tidyverse)
+library(tidycensus)
+library(viridis)
+```
+
+
+
+
+```{r}
+vars <- c("B06009_004",
+          "B25001_001",
+          "B25003_003",
+          "B06007_002",
+          "B01002_001",
+          "B01003_001",
+          "B03002_003",
+          "B03002_004",
+          "B03002_006",
+          "B03002_012",
+          "B01001_026",
+          "B06010_003",
+          "B06010_004",
+          "B06010_005",
+          "B06010_006",
+          "B06010_007",
+          "B06010_008",
+          "B06010_009",
+          "B06010_010",
+          "B06010_011")
+
+```
+
+
+
+
+```{r}
+AT_tracts <- get_acs(geography = "tract", variables = vars,
+                           state = "GA", county = "Fulton", output = "wide") %>% 
+             rename(tot_bach = "B06009_004E",
+                    tot_hh = "B25001_001E",
+                    tot_rent_occ = "B25003_003E",
+                    tot_eng = "B06007_002E",
+                    med_age = "B01002_001E",
+                    tot_pop = "B01003_001E",
+                    pop_inc = "B06010_003E",
+                    bel_10 = "B06010_004E", 
+                    bel_15 = "B06010_005E",
+                    bel_25 = "B06010_006E",
+                    bel_35 = "B06010_007E",
+                    bel_50 = "B06010_008E",
+                    bel_65 = "B06010_009E",
+                    bel_75 = "B06010_010E",
+                    abo_75 = "B06010_011E",
+                    nh_white_pop = "B03002_003E",
+                    nh_black_pop = "B03002_004E",
+                    nh_asian_pop = "B03002_006E",
+                    hispanic_pop = "B03002_012E") %>%
+              mutate(pct_rent_occ = tot_rent_occ / tot_hh,
+                     pct_bach = tot_bach / tot_pop,
+                     pct_eng = tot_eng / tot_pop,
+                     majority_inc = case_when(
+                     (bel_10 + bel_15 + bel_25) / pop_inc > 0.5 ~ "bel_25",
+                     (bel_35 + bel_50 + bel_65 + abo_75) / pop_inc > 0.5 ~ "abo_25",
+                     (bel_10 + bel_15 + bel_25 + bel_35 + bel_50 + bel_65 +
+                      bel_75 + abo_75)/pop_inc < 0.5 ~ "other", 
+                     TRUE ~ "None"),
+                     majority_race_eth = case_when(
+                     nh_white_pop / tot_pop > 0.5 ~ "nh_white",
+                     nh_black_pop / tot_pop > 0.5 ~ "nh_black",
+                     nh_asian_pop / tot_pop > 0.5 ~ "nh_asian",
+                    hispanic_pop / tot_pop > 0.5 ~ "hispanic",
+                    (nh_white_pop + nh_black_pop + nh_asian_pop + hispanic_pop) /
+                     tot_pop < 0.5 ~ "other",
+                     TRUE ~ "None")) %>%
+              filter(tot_pop > 0, tot_hh > 0) %>%
+              select(GEOID, pct_rent_occ, pct_bach, pct_eng,
+                     majority_inc, med_age, majority_race_eth, tot_pop)
+```
+
+
+```{r}
+ggplot(AT_tracts, 
+       aes(x = pct_rent_occ,
+           y = med_age,
+           size = tot_pop,
+           shape = majority_inc,
+           color = majority_race_eth,
+           alpha = pct_eng)) +
+  geom_point() +
+  scale_size_continuous(name = "Tract population") +
+  scale_x_continuous(name = "Percent of renter ocupied housing units",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+  scale_y_continuous(name = "Median age within tract",
+                     breaks = seq(10, 80, by = 10)) +
+  scale_color_discrete(name = "Majority race/ethnicity",
+                       labels = c("Hispanic",
+                                  "Non-Hispanic Asian",
+                                  "Non-Hispanic White",
+                                  "Non-Hispanic Black", 
+                                  "No Majority")) +
+  scale_alpha_continuous(name = "Percent of individuals that only speak English in tract") +
+  scale_shape(name = element_blank(), 
+              labels = c("Income Below $25,000", "Income Above $25,000")) +
+  theme_light() +
+  theme(legend.key.size = unit(0.1, "cm"))
+```
+
+
+```{r}
+ggplot(AT_tracts, 
+       aes(x = pct_rent_occ,
+           y = med_age,
+           color = majority_race_eth)) +
+  geom_point() +
+  scale_x_continuous(name = "Percent of renter occupied units",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+  scale_y_continuous(name = "Median age within tract",
+                     breaks = seq(10, 80, by = 10)) +
+  scale_color_discrete(name = "Majority race/ethnicity",
+                       labels = c("Hispanic",
+                                  "Non-Hispanic Asian",
+                                  "Non-Hispanic White",
+                                  "Non-Hispanic Black", 
+                                  "No Majority")) +
+  theme_light() 
+
+```
+
+
+
+
+```{r}
+ ggplot(AT_tracts, aes(x = factor(majority_race_eth), y = pct_bach, fill = factor(majority_race_eth))) +
+    geom_dotplot(binaxis = "y", dotsize = 0.5) + 
+    scale_y_continuous(name = "Percent of renter ocupied housing units",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) + 
+    scale_x_discrete(name = "Majority race/ethnicity",
+                       labels = c("Hispanic",
+                                  "Non-H Asian",
+                                  "Non-H White",
+                                  "Non-H Black", 
+                                  "No Majority")) + 
+    labs(fill = "Majority race/ethnicity") +
+    scale_fill_discrete(name = "Majority race/ethnicity",
+                       breaks=c("hispainc", "nh_black", "nh_white", "None"),
+                         labels=c("Hispanic", "Non-Hispanic Asian", 
+                                  "Non-Hispanic White", "Non-Hispanic Black"))+
+  theme_light()
+  
+  
+```
+```{r}
+AT_tracts
+```
+
+
+```{r}
+ggplot(AT_tracts, aes(x = majority_race_eth, y = majority_inc, fill = pct_rent_occ)) +
+       geom_tile() +
+      scale_x_discrete(name = "Majority race/ethnicity",
+                       labels = c("Hispanic",
+                                  "Non-H Asian",
+                                  "Non-H White",
+                                  "Non-H Black", 
+                                  "No Majority")) +
+      scale_y_discrete(name = "Majority income",
+                       labels = c("Below $25,000",
+                                  "Above $25,000",
+                                  "No data")) +
+      scale_fill_distiller(palette = "RdPu") +
+      labs(fill = "Percent of renter occupied units") + 
+      theme_minimal()
+
+
+```
+
+
+
+```{r}
+ggplot(AT_tracts, aes(x=pct_eng, y=pct_bach, size = tot_pop, fill = majority_race_eth)) +
+    geom_point(alpha=0.5, shape=21, color="black") + 
+    scale_fill_viridis(discrete=TRUE, guide=FALSE, option="B") +
+    scale_x_continuous(name = "Percent of individuals that only speak English",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+    scale_y_continuous(name = "Percent with bachelor's degree",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+    labs(fill = "Total Population") +
+    theme_light() 
+```
+
+
+```{r}
+ggplot(AT_tracts, aes(x = majority_race_eth, y = pct_eng, fill = majority_race_eth)) +
+    geom_violin(width=2.1, size=0.2, alpha = 0.75) +
+    scale_fill_viridis(discrete=TRUE) +
+    scale_color_viridis(discrete=TRUE) +
+    theme_minimal()
+ 
+```
+
+```{r}
+ ggplot(AT_tracts, aes(x=majority_inc, y=pct_eng, fill = majority_inc)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="B") +
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    scale_y_continuous(name = "Percent with bachelor's degree",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+    scale_x_discrete(name = "Majority income",
+                       labels = c("Below $25,000",
+                                  "Above $25,000",
+                                  "No data"))
+
+    
+```
+
+
+```{r}
+ggplot(AT_tracts, aes(x=pct_eng)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  scale_x_continuous(name = "Percent of individuals that only speak English",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(AT_tracts, aes(x=majority_race_eth, y=pct_eng)) +
+  geom_point() + 
+  geom_segment( aes(x=majority_race_eth, xend=majority_race_eth, y=0, yend=pct_eng)) + 
+  scale_y_continuous(name = "Percent of individuals that only speak English",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = paste(seq(0, 100, by = 10), "%", sep = "")) +
+  scale_x_discrete(name = "Majority race/ethnicity",
+                       labels = c("Hispanic",
+                                  "Non-H Asian",
+                                  "Non-H White",
+                                  "Non-H Black", 
+                                  "No Majority")) +
+  coord_flip()
+```
+
+
+```{r}
+ggplot(AT_tracts, aes(x=majority_inc, y=pct_eng, fill = majority_race_eth)) +
+  geom_bar(stat = "identity", width = 0.5) + 
+  scale_y_continuous(name = "Percent of individuals that only speak English") +
+  scale_x_discrete(name = "Majority income",
+                       labels = c("Below $25,000",
+                                  "Above $25,000",
+                                  "No data")) +
+  theme_bw()
+```
+
+
+
+
+
+
+
