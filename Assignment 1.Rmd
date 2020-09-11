@@ -152,25 +152,38 @@ ggplot(AT_tracts,
 Percent of rent occupied units, and majority race/ethnicity
 
 ```{r}
- ggplot(AT_tracts, aes(x = factor(majority_race_eth), y = pct_bach, fill = factor(majority_race_eth))) +
-    geom_dotplot(binaxis = "y", dotsize = 0.5) + 
-    scale_y_continuous(name = "Percent of renter ocupied housing units",
+ stacked_dots <- ggplot(AT_tracts, aes(x = factor(majority_race_eth), y = pct_bach, 
+                                       fill = factor(majority_race_eth))) +
+                 geom_dotplot(binaxis = "y", dotsize = 0.5) + 
+                 scale_y_continuous(name = "Percent of renter ocupied housing units",
                      breaks = seq(0, 1, by = 0.1),
                      labels = paste(seq(0, 100, by = 10), "%", sep = "")) + 
-    scale_x_discrete(name = "Majority race/ethnicity",
+                 scale_x_discrete(name = "Majority race/ethnicity",
                        labels = c("Hispanic",
                                   "Non-H Asian",
                                   "Non-H White",
                                   "Non-H Black", 
                                   "No Majority")) + 
-    labs(fill = "Majority race/ethnicity") +
-    scale_fill_discrete(name = "Majority race/ethnicity",
+                 labs(fill = "Majority race/ethnicity") +
+                 scale_fill_discrete(name = "Majority race/ethnicity",
                        breaks=c("hispainc", "nh_black", "nh_white", "None"),
                          labels=c("Hispanic", "Non-Hispanic Asian", 
-                                  "Non-Hispanic White", "Non-Hispanic Black"))+
+                                  "Non-Hispanic White", "Non-Hispanic Black")) +
   theme_light()
-  
-  
+```
+
+### Print to PDF
+```{r}
+pdf("stacked_dots", width = 5, height = 5) 
+stacked_dots                    
+dev.off()
+```
+
+### Print to PNG
+```{r}
+png(filename = "stacked_dots.png") 
+stacked_dots                
+dev.off()
 ```
 
 # Plot 4
@@ -192,7 +205,6 @@ ggplot(AT_tracts, aes(x = majority_race_eth, y = majority_inc, fill = pct_rent_o
       scale_fill_distiller(palette = "RdPu") +
       labs(fill = "Percent of renter occupied units") + 
       theme_minimal()
-
 
 ```
 
