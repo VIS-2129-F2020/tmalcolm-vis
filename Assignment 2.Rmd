@@ -9,11 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r cars}
 library(ggplot2)
@@ -27,13 +22,6 @@ library(rnaturalearthhires)
 library(rgeos)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-```{r}
-devtools::install_github("ropensci/rnaturalearthhires")
-
-```
 
 
 ```{r}
@@ -45,6 +33,7 @@ india_map <- ggplot(india_states) +
 
 india_map
 ```
+
 ```{r China}
 india_cea <- "+proj=cea"
 india_chamb <- "+proj=chamb +lat_1=10 +lon_1=30 +lon_2=40"
@@ -82,7 +71,6 @@ india_transformed <- india_states %>%
 
 
 
-
 ```{r}
 birth_india <- read_csv("~/TA/2-CBR.csv") %>% 
                rename(t16 = "2016")  %>% 
@@ -92,6 +80,7 @@ birth_states <- india_transformed %>%
   left_join(birth_india, by = c("name" = "State")) %>%
   select(name, t16)
 ```
+
 ```{r}
 num_birth <- read_csv("~/TA/statistic_id1023387_number-of-live-births-india-2015-2017-by-state.csv")
 
@@ -132,9 +121,6 @@ ggplot(india_transformed) +
   theme_void() 
 ```
 
-```{r}
-view(new_birth_states)
-```
 
 ```{r}
 birth_cartogram_ncont <- new_birth_states %>%
