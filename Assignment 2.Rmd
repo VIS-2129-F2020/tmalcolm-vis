@@ -1,7 +1,7 @@
 ---
 title: "Week 3"
 author: "Taelor Malcolm"
-date: "8/15/2020"
+date: "9/16/2020"
 output: html_document
 ---
 
@@ -23,7 +23,6 @@ library(rgeos)
 ```
 
 
-
 ```{r}
 india_states <- ne_states(country = "India", returnclass = "sf")
 
@@ -34,45 +33,43 @@ india_map <- ggplot(india_states) +
 india_map
 ```
 
-```{r China}
-india_cea <- "+proj=cea"
-india_chamb <- "+proj=chamb +lat_1=10 +lon_1=30 +lon_2=40"
-india_vandg <- "+proj=vandg3"
+```{r}
+india_EPSG2244 <- "+proj=tmerc +lat_0=37.5 +lon_0=-85.66666666666667 +k=0.999966667 +x_0=99999.99989839978 +y_0=249364.9987299975 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs"
+
+india_EPSG4131 <- "+proj=longlat +a=6377276.345 +b=6356075.41314024 +no_defs"
+
+india_SRORG8357 <- "+proj=aea +lat_1=28 +lat_2=12 +lat_0=20 +lon_0=78 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
 ```
 
-
-
-```{r Equal Area Cylindrical}
+```{r EPSG 2244}
 ggplot(india_states) +
   geom_sf() +
-  coord_sf(crs = india_cea) +
+  coord_sf(crs = india_EPSG2244) +
   theme_bw()
 ```
 
-
-```{r Chamberlin Trimetric}
+```{r EPSG 4131}
 ggplot(india_states) +
   geom_sf() +
-  coord_sf(crs = india_chamb) +
+  coord_sf(crs = india_EPSG4131) +
   theme_bw()
 ```
 
-```{r vander der Grinten III}
+```{r SRORG8357}
 ggplot(india_states) +
   geom_sf() +
-  coord_sf(crs = india_vandg) +
+  coord_sf(crs = india_SRORG8357) +
   theme_bw()
 ```
 
 ```{r}
 india_transformed <- india_states %>%
-  st_transform(crs = india_cea)
+  st_transform(crs = india_SRORG8357)
 ```
 
 
-
 ```{r}
-birth_india <- read_csv("~/TA/2-CBR.csv") %>% 
+birth_india <- read_csv("C:/Users/Taelor Malcolm/Documents/GitHub/tmalcolm-vis/Assignment_Data/2-CBR.csv") %>% 
                rename(t16 = "2016")  %>% 
                select(State, t16)
 
@@ -82,7 +79,7 @@ birth_states <- india_transformed %>%
 ```
 
 ```{r}
-num_birth <- read_csv("~/TA/statistic_id1023387_number-of-live-births-india-2015-2017-by-state.csv")
+num_birth <- read_csv("C:/Users/Taelor Malcolm/Documents/GitHub/tmalcolm-vis/Assignment_Data/statistic_id1023387_number-of-live-births-india-2015-2017-by-state.csv")
 
 new_birth_states <- birth_states %>%
   left_join(num_birth, by = "name") %>%
