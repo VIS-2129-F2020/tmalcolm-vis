@@ -1,8 +1,11 @@
 ---
-title: "Week 3"
+title: "Assignment 2"
 author: "Taelor Malcolm"
 date: "9/16/2020"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -10,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r cars}
+```{r loading data, message=FALSE}
 library(ggplot2)
 library(sf)
 library(rnaturalearth)
@@ -22,6 +25,7 @@ library(rnaturalearthhires)
 library(rgeos)
 ```
 
+## States in India
 
 ```{r}
 india_states <- ne_states(country = "India", returnclass = "sf")
@@ -33,6 +37,7 @@ india_map <- ggplot(india_states) +
 india_map
 ```
 
+### Loading Projections 
 ```{r}
 india_EPSG2244 <- "+proj=tmerc +lat_0=37.5 +lon_0=-85.66666666666667 +k=0.999966667 +x_0=99999.99989839978 +y_0=249364.9987299975 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs"
 
@@ -41,6 +46,8 @@ india_EPSG4131 <- "+proj=longlat +a=6377276.345 +b=6356075.41314024 +no_defs"
 india_SRORG8357 <- "+proj=aea +lat_1=28 +lat_2=12 +lat_0=20 +lon_0=78 +x_0=2000000 +y_0=2000000 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
 ```
 
+### Map Projections
+EPSG 2244
 ```{r EPSG 2244}
 ggplot(india_states) +
   geom_sf() +
@@ -48,6 +55,7 @@ ggplot(india_states) +
   theme_bw()
 ```
 
+EPSG 4131
 ```{r EPSG 4131}
 ggplot(india_states) +
   geom_sf() +
@@ -55,6 +63,7 @@ ggplot(india_states) +
   theme_bw()
 ```
 
+SRORG8357
 ```{r SRORG8357}
 ggplot(india_states) +
   geom_sf() +
@@ -67,8 +76,9 @@ india_transformed <- india_states %>%
   st_transform(crs = india_SRORG8357)
 ```
 
-
-```{r}
+### Adding Data
+I used crude birth rate data from 2016 for this assignment 
+```{r Crude Birth Rate}
 birth_india <- read_csv("C:/Users/Taelor Malcolm/Documents/GitHub/tmalcolm-vis/Assignment_Data/2-CBR.csv") %>% 
                rename(t16 = "2016")  %>% 
                select(State, t16)
@@ -78,7 +88,7 @@ birth_states <- india_transformed %>%
   select(name, t16)
 ```
 
-```{r}
+```{r Number of Births}
 num_birth <- read_csv("C:/Users/Taelor Malcolm/Documents/GitHub/tmalcolm-vis/Assignment_Data/statistic_id1023387_number-of-live-births-india-2015-2017-by-state.csv")
 
 new_birth_states <- birth_states %>%
@@ -87,7 +97,7 @@ new_birth_states <- birth_states %>%
   select(name, t16, pop)
 ```
 
-
+## Mapping Data
 ```{r}
 ggplot(birth_states, aes(fill = t16)) +
   geom_sf(color = NA) +
@@ -117,7 +127,6 @@ ggplot(india_transformed) +
     range = c(0, 20)) +
   theme_void() 
 ```
-
 
 ```{r}
 birth_cartogram_ncont <- new_birth_states %>%
