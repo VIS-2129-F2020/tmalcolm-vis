@@ -157,10 +157,6 @@ ggplot(greenspace) +
                                          color = "gray"))
 ```
 
-```{r}
-st_bbox(greenspace)
-```
-
 # Number of Points
 ## Figure 3
 The number and proportion of county polygons containing hospitals.
