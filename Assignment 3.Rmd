@@ -1,0 +1,277 @@
+---
+title: "Assignment 3"
+author: "Taelor Malcolm"
+date: "9/20/2020"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = FALSE}
+library(sf)
+library(tidyverse)
+library(ggthemes)
+library(ggspatial)
+library(units)
+library(nngeo)
+library(maps)
+library(viridis)
+```
+# Loading and Transforming Data 
+
+```{r load data}
+ncounties <- st_read("https://opendata.arcgis.com/datasets/53ca7db14b8f4a9193c1883247886459_67.kml", 
+                  quiet = TRUE) 
+
+greenspace <- st_read("https://opendata.arcgis.com/datasets/090b68b1e926485fbb1840b5c2e710ac_94.kml", 
+                  quiet = TRUE)
+
+gardens <- st_read("https://opendata.arcgis.com/datasets/20847c0908834a6bb1e3474275985640_123.kml", 
+                  quiet = TRUE)
+
+hospitals <- st_read("https://opendata.arcgis.com/datasets/e63a182a16a24b0680f940ed6e7b80f4_10.kml", 
+                  quiet = TRUE)
+
+```
+
+### Point Data 
+
+A.Medical facilities  
+B.Gardens, farms, and orchards 
+
+### Polygon Data
+
+C. Counties in Atlanta  
+D. Greenspace
+
+```{r}
+GA_state_plane <- "+proj=tmerc +lat_0=30 +lon_0=-82.16666666666667 +k=0.9999 +x_0=200000 +y_0=0 +ellps=GRS80 +units=m +no_defs "
+
+#I chose the Georgia StatePlane East projection for this assignment. 
+
+ncounties <- ncounties %>%
+  st_transform(GA_state_plane)
+
+greenspace <- greenspace %>%
+  st_transform(GA_state_plane)
+
+gardens <- gardens %>%
+  st_transform(GA_state_plane)
+
+hospitals <- hospitals %>%
+  st_transform(GA_state_plane)
+
+```
+
+# Points within a polygon
+## Figure 1
+The number and proportion of garden points within 700 meters of a hospital.
+```{r}
+garden_buffer <- st_buffer(gardens, dist = 700) %>%
+  st_union()
+
+ggplot(garden_buffer) +
+  geom_sf() +
+  theme_map()
+```
+```{r}
+hospitals_garden <- hospitals[garden_buffer,]
+  
+ggplot(garden_buffer) +
+  geom_sf() +
+  geom_sf(data = hospitals_garden, 
+          color = "forestgreen", 
+          size = 1.5) +
+  theme_map()
+```
+```{r}
+hospitals <- hospitals %>%
+  st_join(hospitals_garden) %>%
+  mutate(by_garden = !is.na(Name.y))
+
+
+n_gardens_hospitals <- sum(hospitals$by_garden)
+
+n_gardens_hospitals
+```
+There are 12 hospitals within 700 meters of a garden. 
+```{r}
+n_hospitals <- length(hospitals$by_garden)
+
+pct_gardens_hospitals <- n_gardens_hospitals / n_hospitals
+
+pct_gardens_hospitals
+```
+About 27% of all hospitals in Atlanta are within 700 meters of a garden.
+
+# Average Distance 
+## Figure 2
+This is the average distance between gardens and medical facilities. 
+```{r}
+gardens <- gardens %>%
+  mutate(hospital_dist = st_nn(gardens, hospitals, 
+                           returnDist = TRUE)$dist) %>%
+  mutate(hospital_dist = as.numeric(hospital_dist))
+
+
+```
+
+```{r}
+avg_hospital_dist <- mean(gardens$hospital_dist)
+
+avg_hospital_dist
+```
+```{r}
+right_side <- st_bbox(gardens)$xmax
+left_side  <- st_bbox(gardens)$xmin
+top_side <- st_bbox(gardens)$ymax
+bottom_side <- st_bbox(gardens)$ymin
+
+
+ggplot(greenspace) +
+  geom_sf(fill = "olivedrab", color = NA) +
+  geom_sf(data = gardens, size = 0.1,
+          aes(color = hospital_dist)) +
+  coord_sf(xlim = c(left_side, right_side), 
+           ylim = c(bottom_side, top_side), expand = FALSE) +
+  scale_color_viridis_c(name = 
+                          "Atlanta gardens \nby distance to a hospital") +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr",
+                         style = north_arrow_minimal()) +
+  annotate(geom = "text", x = right_side - 50000, 
+           y = bottom_side + 9000, 
+           label = paste("On average, a garden in Atlanta \nis ", 
+                         prettyNum(avg_hospital_dist, digits = 0),
+                         " meters from a hospital.",
+                         sep = ""),
+           hjust = 0, vjust = 0, size = 3) +
+  theme_map() +
+  theme(panel.background = element_rect(fill = "gray95"),
+        legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "gray"))
+```
+
+```{r}
+st_bbox(greenspace)
+```
+
+# Number of Points
+## Figure 3
+The number and proportion of county polygons containing hospitals.
+
+```{r}
+ncounties <- ncounties %>%
+  mutate(num_hospitals = lengths(st_covers(ncounties, hospitals)))
+
+ggplot(ncounties) +
+  geom_sf(color = NA, 
+          aes(fill = num_hospitals)) +
+  scale_fill_viridis_c(name = "Atlanta counties\nby number of hospitals",
+                       breaks = breaks <- seq(0, 20, by = 5),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "hospitals")) +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tl",
+                         style = north_arrow_minimal()) +
+theme_map() +
+  theme(legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "gray")) 
+```
+ 
+## Figure 4
+The number and proportion of county polygons containing garden points.
+```{r}
+ncounties <- ncounties %>%
+  mutate(num_gardens = lengths(st_covers(ncounties, gardens)))
+
+ggplot(ncounties) +
+  geom_sf(color = NA, 
+          aes(fill = num_gardens)) +
+  scale_fill_viridis_c(name = "Atlanta counties\nby number of gardens",
+                       breaks = breaks <- seq(0, 250, by = 50),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "gardens"), 
+                       option = "plasma") +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tl",
+                         style = north_arrow_minimal()) +
+theme_map() +
+  theme(legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "gray")) 
+```
+
+# Overlapping Polygons
+## Figure 5
+Overlapping county and greenspace polygons. 
+```{r}
+ncounties <- ncounties %>%
+  mutate(num_greenspace = lengths(st_overlaps(ncounties, greenspace))) %>%
+  mutate(has_greenspace = num_greenspace > 0)
+```
+
+```{r}
+n_greenspace_ncounties <- sum(ncounties$has_greenspace)
+
+n_greenspace_ncounties
+```
+
+```{r}
+left_side  <- st_bbox(greenspace)$xmin
+top_side <- st_bbox(greenspace)$ymax
+
+ggplot(greenspace) +
+  geom_sf(fill = "olivedrab", color = NA) +
+  geom_sf(data = ncounties,
+          aes(fill = has_greenspace)) +
+  scale_fill_manual(values = c("ivory", "olivedrab"),
+          name = "Counties in Atlanta\nby presence of greenspace", 
+          labels = c("County without\noverlappingg greenspace",
+                     "County with \noverlapping greenspace")) +
+  annotation_scale(location = "br") +
+  annotate(geom = "text", x = left_side, 
+           y = top_side -1000, 
+           label = paste(n_greenspace_ncounties ,
+                         "of Atlanta's", 
+                         length(ncounties$Name),
+                         "counties \noverlap with", 
+                         "greenspace."),
+           hjust = 0, vjust = 0, size = 3) +
+  theme_map() +
+  theme(panel.background = element_rect(fill = "gray90"),
+        legend.background = element_rect(fill = alpha("white", 0.5), 
+                                         color = "lightgray"))
+```
+
+# Density
+## Figure 6
+The average density of garden points in each county polygon
+```{r}
+ncounties <- ncounties %>%
+  mutate(area = set_units(st_area(ncounties), km^2)) %>%
+  mutate(gardens_dens = as.numeric(num_gardens / area))
+
+ggplot(ncounties) +
+  geom_sf(color = NA, 
+          aes(fill = gardens_dens)) +
+    scale_fill_viridis_c(name = 
+                           "Counties in Atlanta\nby garden density",
+                       breaks = breaks <- seq(0, 1, by = .05),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "gardens per square km"), 
+                       option = "inferno") +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tl",
+                         style = north_arrow_minimal()) +
+  theme_map() +
+  theme(legend.position = "right")
+
+```
+
+
+
