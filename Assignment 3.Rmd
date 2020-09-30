@@ -54,6 +54,7 @@ GA_state_plane <- "+proj=tmerc +lat_0=30 +lon_0=-82.16666666666667 +k=0.9999 +x_
 
 #I chose the Georgia StatePlane East projection for this assignment. 
 
+
 ncounties <- ncounties %>%
   st_transform(GA_state_plane)
 
