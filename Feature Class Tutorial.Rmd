@@ -1,0 +1,23 @@
+---
+title: "Feature Class Tutorial"
+author: "Taelor Malcolm"
+date: "10/16/2020"
+output: html_document
+---
+```{r}
+install.packages("arcgisbinding", repos="http://r-arcgis.github.io/r-bridge", type="win.binary")
+```
+
+```{r}
+library(arcgisbinding)
+```
+
+```{r}
+arc.check_product()
+```
+
+
+```{r}
+ptc_golf <- arc.open("C:/Users/Taelor Malcolm/Documents/ArcGIS/Projects/Feature Class Tutorial/Feature Class Tutorial.gdb/PTC_golf_carts")
+ptc_golf
+```
