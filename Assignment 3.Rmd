@@ -187,7 +187,7 @@ The number and proportion of county polygons containing garden points.
 ncounties <- ncounties %>%
   mutate(num_gardens = lengths(st_covers(ncounties, gardens)))
 
-ggplot(ncounties) +
+atl_gardens <- ggplot(ncounties) +
   geom_sf(color = NA, 
           aes(fill = num_gardens)) +
   scale_fill_viridis_c(name = "Atlanta counties\nby number of gardens",
@@ -201,6 +201,10 @@ ggplot(ncounties) +
 theme_map() +
   theme(legend.background = element_rect(fill = alpha("white", 0.5), 
                                          color = "gray")) 
+
+png(filename = "atl_gardens.png") 
+atl_gardens               
+dev.off()
 ```
 
 # Overlapping Polygons
